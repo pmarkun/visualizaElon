@@ -1,0 +1,181 @@
+{
+    "title": "Quanto vale o Brasil?",
+    "info": "Esta visualização compara o orçamento da União com gastos públicos, itens do cotidiano, grandes obras, empresas e escândalos de corrupção. Os valores são proporcionais — 1 pixel equivale a R$ 100 milhões.",
+    "explanation_base": "Os quadrados pequenos representam valores cotidianos; os marcadores maiores aparecem em uma barra proporcional ao orçamento da União.",
+    "unit_per_pixel_width_main_bar": 100000000,
+    "unit_value_for_1px_squared_initial": 1000,
+  
+    "items": [
+      { "id": "coffee", "description": "Café por ano (1/dia)", "value": 1500 },
+      { "id": "streaming", "description": "Streaming anual (Netflix etc)", "value": 1200 },
+      { "id": "salario_minimo", "description": "Salário Mínimo Anual (2025)", "value": 20976 },
+      { "id": "cesta_basica", "description": "Cesta básica anual", "value": 9600 },
+      { "id": "carro_popular", "description": "Carro popular novo", "value": 72000 },
+      { "id": "mcmv_unidade", "description": "1 Casa MCMV", "value": 100000 },
+      { "id": "hospital_medio", "description": "Construção hospital médio", "value": 60000000 },
+      { "id": "linha_metro", "description": "1km Metrô Subterrâneo", "value": 800000000 },
+      { "id": "100k_mcmv", "description": "100 mil Casas MCMV", "value": 10000000000 },
+      { "id": "budget", "description": "Orçamento da União 2025", "value": 5300000000000 },
+      { "id": "sp_orcamento", "description": "Orçamento de São Paulo (2025)", "value": 110000000000 },
+      { "id": "rio_orcamento", "description": "Orçamento do Rio (2025)", "value": 45500000000 },
+      { "id": "bh_orcamento", "description": "Orçamento de BH (2025)", "value": 17200000000 },
+      { "id": "recife_orcamento", "description": "Orçamento de Recife (2025)", "value": 8900000000 },
+      { "id": "sp_estado", "description": "Orçamento Estado de SP (2025)", "value": 350000000000 },
+      { "id": "rj_estado", "description": "Orçamento Estado do RJ (2025)", "value": 110000000000 },
+      { "id": "ba_estado", "description": "Orçamento Estado da Bahia (2025)", "value": 68000000000 },
+      { "id": "petrobras", "description": "Valor de mercado da Petrobras", "value": 510000000000 },
+      { "id": "vale", "description": "Valor de mercado da Vale", "value": 360000000000 },
+      { "id": "magalu", "description": "Valor de mercado do Magazine Luiza", "value": 12000000000 },
+      { "id": "mensalao", "description": "Mensalão (estimativa total)", "value": 140000000 },
+      { "id": "lava_jato", "description": "Lava Jato (recuperado)", "value": 4300000000 },
+      { "id": "rachadinhas", "description": "Caso das Rachadinhas (estimado)", "value": 30000000 },
+      { "id": "covid_kit_prevencao", "description": "Kits de prevenção ineficazes (COVID)", "value": 1500000000 },
+      { "id": "joias", "description": "Joias sauditas (Bolsonaro)", "value": 16000000 },
+      { "id": "estadio", "description": "Estádio padrão FIFA", "value": 1800000000 },
+      { "id": "ferrari", "description": "Ferrari Roma", "value": 2200000 },
+      { "id": "transplante", "description": "Transplante de fígado", "value": 120000 },
+      { "id": "piso_professor", "description": "Piso anual professor (SP)", "value": 84000 },
+        {
+          "id": "guerra_ucrania_2022",
+          "description": "Custo estimado da guerra na Ucrânia (2022, Rússia)",
+          "value": 1100000000000
+        },
+        {
+          "id": "defesa_eua_2024",
+          "description": "Orçamento do Pentágono (EUA, 2024)",
+          "value": 884000000000
+        },
+        {
+          "id": "infra_china_ano",
+          "description": "Investimento chinês em infraestrutura (anual)",
+          "value": 1500000000000
+        },
+        {
+          "id": "amazon_faturamento",
+          "description": "Faturamento anual da Amazon (2023)",
+          "value": 575000000000
+        },
+        {
+          "id": "meta_faturamento",
+          "description": "Faturamento anual da Meta (Facebook, 2023)",
+          "value": 134000000000
+        },
+        {
+          "id": "lucro_petroleiras",
+          "description": "Lucro total das grandes petroleiras (2022)",
+          "value": 219000000000
+        },
+        {
+          "id": "gastos_guerra_irak",
+          "description": "Gastos EUA na Guerra do Iraque (2003–2011)",
+          "value": 2200000000000
+        },
+        {
+          "id": "cinturao_iniciativa",
+          "description": "Cinturão e Rota (China, estimado)",
+          "value": 4000000000000
+        },
+        {
+          "id": "subsidios_comb_fosseis",
+          "description": "Subsídios globais a combustíveis fósseis (2022)",
+          "value": 7000000000000
+        },
+        {
+          "id": "pandemia_global_custo",
+          "description": "Custo econômico global da COVID-19",
+          "value": 28000000000000
+        },
+            {
+              "id": "climate_adaptation_global",
+              "description": "Necessário por ano para adaptação climática global (ONU)",
+              "value": 300000000000
+            },
+            {
+              "id": "meta_metaverso",
+              "description": "Investimento total da Meta no Metaverso até 2024",
+              "value": 46000000000
+            },
+            {
+              "id": "space_x_starship",
+              "description": "Projeto Starship (SpaceX, estimado)",
+              "value": 10000000000
+            },
+            {
+              "id": "trem_bala_california",
+              "description": "Trem-bala Califórnia (estimado para 2033)",
+              "value": 128000000000
+            },
+            {
+              "id": "apple_market_cap",
+              "description": "Valor de mercado da Apple (2024)",
+              "value": 2900000000000
+            },
+            {
+              "id": "google_cloud_invest",
+              "description": "Investimento anual Google em data centers (2023)",
+              "value": 30000000000
+            },
+            {
+              "id": "nasa_budget_2024",
+              "description": "Orçamento da NASA (2024)",
+              "value": 27900000000
+            },
+            {
+              "id": "eurofighter_program",
+              "description": "Programa Eurofighter (consórcio europeu)",
+              "value": 100000000000
+            },
+            {
+              "id": "manhattan_project_hoje",
+              "description": "Projeto Manhattan ajustado à inflação",
+              "value": 25000000000
+            },
+            {
+              "id": "olimpiadas_paris_2024",
+              "description": "Custo total das Olimpíadas de Paris (estimado)",
+              "value": 9000000000
+            },
+            {
+              "id": "webb_telescope",
+              "description": "Telescópio James Webb (NASA + ESA + CSA)",
+              "value": 10000000000
+            },
+            {
+              "id": "missao_marte_tripulada",
+              "description": "Estimativa missão tripulada a Marte (NASA)",
+              "value": 500000000000
+            },
+            {
+              "id": "deficit_ufrj_2024",
+              "description": "Déficit orçamentário da UFRJ (2024)",
+              "value": 300000000
+            },
+            {
+              "id": "obras_paradas_brasil",
+              "description": "Custo total de obras paradas no Brasil",
+              "value": 120000000000
+            },
+            {
+              "id": "gastos_licitacoes_suspeitas",
+              "description": "Licitações suspeitas (Brasil, 2023)",
+              "value": 8000000000
+            },
+            {
+              "id": "valor_grammy_2023",
+              "description": "Produção do Grammy Awards 2023",
+              "value": 80000000
+            },
+            {
+              "id": "bitcoin_mercado_total",
+              "description": "Valor de mercado do Bitcoin (2024)",
+              "value": 1300000000000
+            },
+            {
+              "id": "elon_musk_fortuna",
+              "description": "Fortuna estimada de Elon Musk",
+              "value": 210000000000
+            }          
+      
+    ]
+  }
+  

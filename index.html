@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Visualização de Orçamento V3</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* Reset básico e box-sizing */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f4f8;
+      color: #333;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 380px; /* LARGURA AUMENTADA */
+      min-width: 350px;
+      background: #e9edf0;
+      padding: 20px; /* Mais padding */
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      display: none;
+    }
+    #sidebar h2 { font-size: 1.3em; margin-bottom: 15px; color: #334; text-align: center;}
+    #sidebar h3 { font-size: 1.15em; margin-top:15px; margin-bottom: 12px; color: #445; border-bottom: 1px solid #ddd; padding-bottom: 6px;}
+
+    .sidebar-section { margin-bottom: 12px; }
+    
+    .input-group { display: flex; gap: 10px; align-items: center;}
+    .input-group label { font-size: 0.9em; color: #555; white-space: nowrap; }
+    .input-group input[type="text"], .input-group input[type="number"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.95em;
+      flex-grow: 1; /* Para ocupar espaço disponível */
+    }
+    .input-group input.desc-input {  width: 150px; } /* Largura mínima para descrição */
+    .input-group input.value-input { width: 100px; flex-grow: 0;} /* Largura fixa para valor */
+
+    .action-button, .file-ops button, .file-ops label.button-like {
+      padding: 8px 12px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.95em;
+      transition: background-color 0.2s;
+      text-align: center;
+    }
+
+    label.button-like {
+     display:flex;
+     align-items: center;
+     }
+    
+     .action-button:hover, .file-ops button:hover, .file-ops label.button-like:hover { background-color: #357abd; }
+    
+    .icon-button {
+      background: none;
+      border: none;
+      font-size: 1.3em; /* Tamanho do ícone */
+      cursor: pointer;
+      padding: 5px;
+      line-height: 1;
+      color: #555;
+    }
+    .icon-button.add { color: #28a745; }
+    .icon-button.remove { color: #dc3545; }
+    .icon-button:hover { opacity: 0.7; }
+
+
+    #item-list-editable { list-style: none; padding: 0; }
+    #item-list-editable li {
+      padding: 4px;
+      margin-bottom: 4;
+      border-radius: 4px;
+      display: flex;
+      gap: 4px; /* Espaço entre os elementos do item */
+      align-items: center;
+    }
+    #item-list-editable li .item-id-display {
+        font-size: 0.75em;
+        color: #777;
+        background-color: #f0f0f0;
+        padding: 2px 4px;
+        border-radius: 3px;
+        margin-right: auto; /* Empurra para a esquerda */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 70px; /* Para não ocupar muito espaço */
+        white-space: nowrap;
+    }
+
+
+    .file-ops { margin-top: 20px; display: flex; gap: 10px; justify-content: center;}
+    .file-ops input[type="file"] { display: none; }
+    .file-ops label.button-like { background-color: #5cb85c; }
+    .file-ops label.button-like:hover { background-color: #4cae4c; }
+    .file-ops button { background-color: #f0ad4e;}
+    .file-ops button:hover { background-color: #ec971f;}
+
+    /* Sidebar Toggle Button */
+    #sidebar-toggle {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.95em;
+      transition: background-color 0.2s;
+    }
+
+    /* Main Content Area (Gráfico) */
+    /* ... (CSS do main-content, chart-container, scroll-wrapper, etc., da versão anterior - SEM ALTERAÇÕES AQUI) ... */
+     #main-content { flex-grow: 1; display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
+    #main-content h1 { text-align: center; margin-bottom: 5px; font-size: 1.6em; flex-shrink: 0; }
+    .info, .explanation { text-align: center; font-size: 0.8em; color: #555; max-width: 900px; margin: 2px auto 8px; flex-shrink: 0; }
+    #chart-container { width: 100%; display: flex; justify-content: center; flex-grow: 1; min-height: 0; }
+    #scroll-wrapper { width: 100%; height: 100%; overflow-x: auto; overflow-y: hidden; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; align-items: center; position: relative; padding-top: 30px; padding-left: 10px; padding-right: 10px; padding-bottom: 10px; }
+    #initial-items-zone { display: flex; align-items: center; justify-content: flex-start; height: 95%; flex-shrink: 0; margin-right: 35px; position: relative; }
+    .small-item-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-right: 45px; }
+    .small-item-block { box-sizing: border-box; border: 1px solid rgba(0,0,0,0.2); cursor: pointer; transition: opacity 0.2s, filter 0.2s; position: relative; }
+    .small-item-block:hover { opacity: 0.75; filter: brightness(1.1); }
+    .small-item-label { font-size: 11px; text-align: center; white-space: nowrap; padding: 3px 5px; background-color: rgba(250, 250, 255, 0.97); border: 1px solid #bbb; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #333; position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%); z-index: 15; }
+    .small-item-label strong { display: block; font-size: 11px; margin-bottom:1px; }
+    #main-bar-container { position: relative; height: 85%; display: flex; align-items: center; flex-grow: 1; }
+    .main-bar { width: 100%; height: 100%; background-color: #e0e0e6; position: relative; border-radius: 5px; }
+    .value-tick, .item-tick-marker { position: absolute; bottom: 0; background-color: #555; width: 1px; }
+    .value-tick.minor { height: 20%; background-color: #a0a0a0; }
+    .value-tick.major { height: 35%; width: 2px; }
+    .item-tick-marker { height: 75%; width: 8px; z-index: 5; transition: filter 0.2s; }
+    .item-tick-marker:hover { filter: brightness(1.2); }
+    .item-tick-label { position: absolute; bottom: 102%; left: 50%; transform: translateX(-50%); white-space: wrap; font-size: 16px; padding: 4px 7px; background-color: rgba(250, 250, 255, 0.97); border: 1px solid #bbb; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #333; z-index: 20; min-width: 150px;}
+    .item-tick-label strong { display: block; font-size:12px; margin-bottom: 1px; }
+    #top-axis-container { position: absolute; top: 2px; left: 0; height: 25px; pointer-events: none; z-index: 25; }
+    .top-axis-tick { position: absolute; bottom: 0; font-size: 10px; color: #444; transform: translateX(-50%); white-space: nowrap; }
+    .top-axis-tick::before { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 1px; height: 5px; background-color: #aaa; }
+    .custom-tooltip { position: absolute; text-align: center; padding: 8px 10px; font-size: 12px; background: rgba(0, 0, 0, 0.85); color: #fff; border-radius: 4px; pointer-events: none; opacity: 0; transition: opacity 0.1s ease-out; z-index: 30; max-width: 220px; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .custom-tooltip strong { display: block; margin-bottom: 4px; font-size: 13px; color: #f0f0f0; }
+
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h2>Configurações</h2>
+
+    <div class="sidebar-section file-ops">
+      <label for="importJsonInput" class="button-like">Importar</label>
+      <input type="file" id="importJsonInput" accept=".json">
+      <button id="exportJsonBtn" class="action-button">Exportar</button>
+    </div>
+    
+    <div class="sidebar-section">
+      <h3>Lista de Itens</h3>
+      <div class="input-group">
+        <input type="text" id="newItemDesc" placeholder="Descrição do novo item" class="desc-input">
+        <input type="number" id="newItemValue" placeholder="Valor" class="value-input">
+        <button id="addItemBtn" class="icon-button add" title="Adicionar Item">✚</button> <!-- + -->
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <ul id="item-list-editable">
+        <!-- Itens serão populados por JS -->
+      </ul>
+    </div>
+  </div>
+
+  <div id="main-content">
+     <!-- ... (HTML do main-content da versão anterior - SEM ALTERAÇÕES AQUI) ... -->
+    <h1 id="title">Visualizador de Orçamento Híbrido Interativo</h1>
+    <button id="sidebar-toggle" onclick="toggleSidebar()">⚙️</button>
+    <div class="info" id="infoGlobal">Carregando dados...</div>
+    <div id="chart-container">
+      <div id="scroll-wrapper">
+        <div id="initial-items-zone"></div>
+        <div id="main-bar-container">
+          <div class="main-bar"></div>
+        </div>
+        <div id="top-axis-container"></div>
+      </div>
+    </div>
+    <div class="explanation" id="explanationGlobal"></div>
+
+  </div>
+  <div class="custom-tooltip"></div>
+
+  <script>
+    let chartData = null; 
+    const APP_CONFIG = { /* ... (igual à versão anterior) ... */
+        currency_symbol: 'R$', locale: 'pt-BR', main_item_id: 'budget', 
+        initial_zone_value_threshold_percentage: 0.00005,
+        max_initial_item_height_px_percentage_of_zone: 0.75,
+        min_dimension_for_initial_label_px: 10,
+        value_tick_minor_interval_main_bar: 500 * 1000 * 1000,
+        value_tick_major_interval_main_bar: 2500 * 1000 * 1000,
+        label_min_spacing_px_main_bar: 15,
+        min_item_x_pos_for_label_main_bar: 1,
+    };
+    
+    // --- Seletores DOM ---
+    const newItemDescInput = document.getElementById('newItemDesc');
+    const newItemValueInput = document.getElementById('newItemValue');
+    const addItemBtn = document.getElementById('addItemBtn');
+    const itemListUl = document.getElementById('item-list-editable'); // ID Atualizado
+    const importJsonInput = document.getElementById('importJsonInput');
+    const exportJsonBtn = document.getElementById('exportJsonBtn');
+    
+    // --- Funções Utilitárias ---
+    function generateUniqueId() {
+      return `item_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    }
+
+    // --- Funções da Sidebar ---
+    function renderEditableItemList() {
+      itemListUl.innerHTML = '';
+      if (!chartData || !chartData.items) return;
+      
+      const sortedItems = [...chartData.items].sort((a,b) => {
+        if (a.id === APP_CONFIG.main_item_id) return 1;
+        if (b.id === APP_CONFIG.main_item_id) return -1;
+        return a.value - b.value;
+      });
+
+      sortedItems.forEach(item => {
+        const isMainItem = item.id === APP_CONFIG.main_item_id;
+        const li = document.createElement('li');
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group';
+        
+
+        const descInput = document.createElement('input');
+        descInput.type = 'text';
+        descInput.className = 'desc-input';
+        descInput.value = item.description;
+        descInput.dataset.id = item.id;
+        descInput.title = `Descrição (ID: ${item.id})`;
+        if (isMainItem) descInput.disabled = true; // Não edita descrição do item principal
+
+        const valueInput = document.createElement('input');
+        valueInput.type = 'number';
+        valueInput.className = 'value-input';
+        valueInput.value = item.value;
+        valueInput.dataset.id = item.id;
+        valueInput.title = `Valor (ID: ${item.id})`;
+         if (isMainItem) valueInput.disabled = true;
+
+        inputGroup.appendChild(descInput);
+        inputGroup.appendChild(valueInput);
+        
+        li.appendChild(inputGroup);
+        if (!isMainItem) {
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'icon-button remove';
+          removeBtn.innerHTML = '✖'; // X
+          removeBtn.title = "Remover Item";
+          removeBtn.dataset.id = item.id;
+          removeBtn.addEventListener('click', () => removeItem(item.id));
+          inputGroup.appendChild(removeBtn);
+        } else {
+            const idDisplay = document.createElement('span');
+            idDisplay.className = 'item-id-display';
+            idDisplay.textContent = '(Principal)';
+            idDisplay.title = `ID: ${item.id} (Não editável)`;
+            inputGroup.appendChild(idDisplay);
+        }
+        
+        // Event listeners para salvar ao sair do campo ou pressionar Enter
+        [descInput, valueInput].forEach(input => {
+          if (isMainItem) return;
+          input.addEventListener('change', handleItemInputChange); // Salva na mudança efetiva
+          input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              input.blur(); // Aciona o evento 'change' se houver mudança
+            }
+          });
+        });
+        itemListUl.appendChild(li);
+      });
+    }
+
+    function handleItemInputChange(event) {
+        const inputElement = event.target;
+        const itemId = inputElement.dataset.id;
+        const itemIndex = chartData.items.findIndex(i => i.id === itemId);
+
+        if (itemIndex > -1) {
+            const currentItem = chartData.items[itemIndex];
+            let newDescription = currentItem.description;
+            let newValue = currentItem.value;
+
+            if (inputElement.classList.contains('desc-input')) {
+                newDescription = inputElement.value.trim();
+            } else if (inputElement.classList.contains('value-input')) {
+                const parsedValue = parseFloat(inputElement.value);
+                if (!isNaN(parsedValue) && parsedValue >= 0) {
+                    newValue = parsedValue;
+                } else {
+                    alert("Valor inválido. Deve ser um número não negativo.");
+                    inputElement.value = currentItem.value; // Reverte para o valor antigo
+                    return;
+                }
+            }
+            
+            // Atualiza apenas se houver mudança real para evitar re-renderizações desnecessárias
+            if (newDescription !== currentItem.description || newValue !== currentItem.value) {
+                 chartData.items[itemIndex].description = newDescription;
+                 chartData.items[itemIndex].value = newValue;
+                 renderVisualization(); // Re-renderiza o gráfico
+                 // Não precisa chamar renderEditableItemList() aqui, pois o input já reflete a mudança
+            }
+        }
+    }
+
+    function addNewItem() {
+      const description = newItemDescInput.value.trim();
+      const value = parseFloat(newItemValueInput.value);
+
+      if (!description || isNaN(value)) {
+        alert('Por favor, preencha a Descrição e um Valor numérico válido.');
+        return;
+      }
+      if (value < 0) {
+        alert('O valor não pode ser negativo.');
+        return;
+      }
+
+      const newItem = {
+        id: generateUniqueId(),
+        description: description,
+        value: value
+      };
+
+      if (!chartData) { chartData = { items: [] }; } // Caso raro de não ter sido inicializado
+      chartData.items.push(newItem);
+      
+      newItemDescInput.value = '';
+      newItemValueInput.value = '';
+      
+      renderEditableItemList();
+      renderVisualization();
+    }
+
+    function removeItem(itemId) {
+      // A confirmação foi removida conforme solicitado
+      if (!chartData) return;
+      chartData.items = chartData.items.filter(i => i.id !== itemId);
+      renderEditableItemList();
+      renderVisualization();
+    }
+
+    // Funções handleImportJson e handleExportJson permanecem as mesmas da versão anterior
+    // ... cole aqui handleImportJson e handleExportJson da versão anterior ...
+    function handleImportJson(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData && Array.isArray(importedData.items) && 
+                        importedData.hasOwnProperty('info') && 
+                        importedData.hasOwnProperty('explanation_base') &&
+                        importedData.hasOwnProperty('unit_per_pixel_width_main_bar') &&
+                        importedData.hasOwnProperty('unit_value_for_1px_squared_initial') &&
+                        importedData.items.some(item => item.id === APP_CONFIG.main_item_id)
+                        ) {
+                        chartData = importedData; renderEditableItemList(); renderVisualization(); alert('Dados importados com sucesso!');
+                    } else { alert('Formato de JSON inválido ou item principal ausente.');}
+                } catch (error) { alert('Erro ao processar o arquivo JSON: ' + error.message); }
+            };
+            reader.readAsText(file); event.target.value = null;
+        }
+    }
+    function handleExportJson() {
+        if (!chartData) { alert("Nenhum dado para exportar."); return; }
+        const dataStr = JSON.stringify(chartData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'orcamento_visualizador_data.json';
+        let linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri); linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click(); linkElement.remove();
+    }
+
+    // --- Event Listeners ---
+    addItemBtn.addEventListener('click', addNewItem);
+    importJsonInput.addEventListener('change', handleImportJson);
+    exportJsonBtn.addEventListener('click', handleExportJson);
+
+    // --- Código D3 (formatCurrency, seletores D3, renderVisualization) ---
+    // ... (cole aqui formatCurrency e a função renderVisualization COMPLETA da versão anterior) ...
+    // Certifique-se que renderVisualization usa a variável `chartData` global.
+    // Os seletores para infoGlobalSel, explanationGlobalSel já estão corretos.
+    function formatCurrency(value, options = { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }) {
+      if (value === 0 && options.notation !== 'standard') return `${APP_CONFIG.currency_symbol} 0`; 
+      if (value === 0 && options.notation === 'standard') return `${APP_CONFIG.currency_symbol} 0,00`;
+      const defaultOptions = { style: 'currency', currency: 'BRL' };
+      let mergedOptions = {...defaultOptions, ...options};
+      if (Math.abs(value) < 1000 && options.notation === 'compact') {
+        mergedOptions.notation = 'standard'; mergedOptions.maximumFractionDigits = 0;
+      } else if (options.notation === 'standard') {
+        if (!options.hasOwnProperty('minimumFractionDigits')) { mergedOptions.minimumFractionDigits = 2; }
+        if (!options.hasOwnProperty('maximumFractionDigits')) { mergedOptions.maximumFractionDigits = 2; }
+      }
+      return new Intl.NumberFormat(APP_CONFIG.locale, mergedOptions).format(value);
+    }
+
+    const tooltip = d3.select(".custom-tooltip");
+    const titleSel = d3.select("#title");
+    const infoGlobalSel = d3.select('#infoGlobal');
+    const explanationGlobalSel = d3.select('#explanationGlobal');
+    const scrollWrapperSel = d3.select('#scroll-wrapper');
+    const initialItemsZoneSel = d3.select('#initial-items-zone');
+    const mainBarContainerSel = d3.select('#main-bar-container');
+    const mainBarSel = mainBarContainerSel.select('.main-bar');
+    const topAxisContainerSel = d3.select('#top-axis-container');
+
+    function renderVisualization() {
+      if (!chartData || !chartData.items || !chartData.items.some(item => item.id === APP_CONFIG.main_item_id) ) { 
+        let errorMsg = "Aguardando carregamento dos dados válidos...";
+        if(chartData && chartData.items && !chartData.items.some(item => item.id === APP_CONFIG.main_item_id)){
+            errorMsg = `Erro: Item principal com ID "${APP_CONFIG.main_item_id}" não encontrado nos dados.`;
+        }
+        infoGlobalSel.text(errorMsg); explanationGlobalSel.text("");
+        initialItemsZoneSel.html(""); mainBarSel.html(""); topAxisContainerSel.html("");
+        console.log(errorMsg); return;
+      }
+      
+      titleSel.text(chartData.title || "Visualizador de Orçamento Híbrido Interativo");
+      infoGlobalSel.text(chartData.info); 
+      explanationGlobalSel.html(chartData.explanation_base + 
+        ` Escala Régua: 1px larg. = ${formatCurrency(chartData.unit_per_pixel_width_main_bar, {notation: 'standard'})}.<br>` +
+        `Escala Quadrados: 1px² área = ${formatCurrency(chartData.unit_value_for_1px_squared_initial, {notation: 'standard'})}.`
+      );
+
+      const allItems = JSON.parse(JSON.stringify(chartData.items)); 
+      allItems.sort((a, b) => a.value - b.value);
+      const mainItem = allItems.find(d => d.id === APP_CONFIG.main_item_id);
+      const thresholdValue = mainItem.value * APP_CONFIG.initial_zone_value_threshold_percentage;
+      const initialZoneItemsData = allItems.filter(d => d.value <= thresholdValue && d.id !== mainItem.id);
+      const mainBarTickItemsData = allItems.filter(d => d.value > thresholdValue && d.id !== mainItem.id);
+      const colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(allItems.map(d => d.id));
+
+      initialItemsZoneSel.html("");
+      const initialZoneAvailableHeight = initialItemsZoneSel.node().clientHeight;
+      if (initialZoneAvailableHeight === 0 && initialZoneItemsData.length > 0) {
+          setTimeout(renderVisualization, 250); return;
+      }
+      const maxInitialItemHeight = initialZoneAvailableHeight * APP_CONFIG.max_initial_item_height_px_percentage_of_zone;
+      let totalInitialZoneWidth = 0;
+
+      initialZoneItemsData.forEach(item => {
+        const target_area_px = item.value / chartData.unit_value_for_1px_squared_initial; 
+        let itemWidthPx = 0, itemHeightPx = 0;
+        if (target_area_px > 0.05) { 
+          const ideal_side_px = Math.sqrt(target_area_px);
+          if (ideal_side_px <= maxInitialItemHeight) { itemWidthPx = ideal_side_px; itemHeightPx = ideal_side_px; } 
+          else { itemHeightPx = maxInitialItemHeight; itemWidthPx = target_area_px / itemHeightPx; }
+          itemWidthPx = Math.max(1, itemWidthPx); itemHeightPx = Math.max(1, itemHeightPx);
+        } else { item.renderWidth = 0; return; }
+        item.renderWidth = itemWidthPx; item.renderHeight = itemHeightPx;
+        
+        const wrapper = initialItemsZoneSel.append('div').attr('class', 'small-item-wrapper');
+        const block = wrapper.append('div').attr('class', 'small-item-block')
+          .style('width', `${item.renderWidth}px`).style('height', `${item.renderHeight}px`)
+          .style('background-color', colorScale(item.id)).datum(item) 
+          .on("mouseover", (event, d) => { tooltip.transition().duration(100).style("opacity", .95); tooltip.html(`<strong>${d.description}</strong>${formatCurrency(d.value, {notation:'standard'})}`).style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 30) + "px"); })
+          .on("mouseout", () => { tooltip.transition().duration(300).style("opacity", 0); });
+        
+        if (item.renderWidth >= APP_CONFIG.min_dimension_for_initial_label_px && item.renderHeight >= APP_CONFIG.min_dimension_for_initial_label_px) {
+            wrapper.append('div').attr('class', 'small-item-label').html(`<strong>${item.description.substring(0,120)}${item.description.length > 120 ? '...' : ''}</strong><em>${formatCurrency(item.value, {maximumFractionDigits:0})}</em>`);
+        }
+        const marginRight = parseFloat(getComputedStyle(wrapper.node()).marginRight || "0");
+        totalInitialZoneWidth += item.renderWidth + marginRight;
+      });
+      initialItemsZoneSel.style('min-width', `${totalInitialZoneWidth}px`);
+
+      mainBarSel.html(""); topAxisContainerSel.html("");
+      const unit_per_pixel_main_bar = chartData.unit_per_pixel_width_main_bar; 
+      const mainBarActualWidthPx = mainItem.value / unit_per_pixel_main_bar;
+      mainBarSel.style('width', `${mainBarActualWidthPx}px`);
+      const initialZoneRenderedWidth = initialItemsZoneSel.node()?.offsetWidth || 0;
+      const initialZoneMarginRight = parseFloat(getComputedStyle(initialItemsZoneSel.node()).marginRight || "0");
+      topAxisContainerSel.style('width', `${mainBarActualWidthPx}px`).style('left', `${initialZoneRenderedWidth + initialZoneMarginRight}px`);
+
+      const numPotentialMinorTicks = Math.floor(mainItem.value / APP_CONFIG.value_tick_minor_interval_main_bar);
+      for (let i = 1; i <= numPotentialMinorTicks; i++) {
+        const tickValue = i * APP_CONFIG.value_tick_minor_interval_main_bar;
+        if (tickValue >= mainItem.value) break;
+        const xPos = tickValue / unit_per_pixel_main_bar;
+        if (xPos < 0.5 && tickValue > 0) continue;
+        const isMajorTick = (tickValue % APP_CONFIG.value_tick_major_interval_main_bar === 0);
+        mainBarSel.append('div').attr('class', `value-tick ${isMajorTick ? 'major' : 'minor'}`).style('left', `${xPos}px`)
+          .on("mouseover", (event) => { tooltip.transition().duration(100).style("opacity", .95); tooltip.html(`Marca de valor:<br><strong>${formatCurrency(tickValue, {notation: 'standard'})}</strong>`).style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 30) + "px"); })
+          .on("mouseout", () => { tooltip.transition().duration(300).style("opacity", 0); });
+      }
+
+      let labelsData = []; 
+      mainBarTickItemsData.forEach(item => {
+        if (item.value === 0 || item.value >= mainItem.value) return;
+        const xPos = item.value / unit_per_pixel_main_bar;
+        const tempLabelNode = document.createElement('div'); tempLabelNode.className = 'item-tick-label'; tempLabelNode.style.visibility = 'hidden'; tempLabelNode.style.position = 'absolute'; document.body.appendChild(tempLabelNode); 
+        tempLabelNode.innerHTML = `<strong>${item.description}</strong><em>${formatCurrency(item.value)}</em>`;
+        const estimatedLabelWidth = tempLabelNode.getBoundingClientRect().width; document.body.removeChild(tempLabelNode);
+        labelsData.push({ item: item, xPos: xPos, labelWidth: estimatedLabelWidth, id: item.id });
+      });
+
+      let visibleLabelsInfo = []; let lastPlacedLabelEndX = -APP_CONFIG.label_min_spacing_px_main_bar; 
+      labelsData.sort((a,b) => a.xPos - b.xPos); 
+      for(const currentLabelInfo of labelsData){
+        const labelCentralX = currentLabelInfo.xPos; const labelHalfWidth = currentLabelInfo.labelWidth / 2;
+        const labelStartX = labelCentralX - labelHalfWidth; const labelEndX = labelCentralX + labelHalfWidth;
+        if (labelStartX >= lastPlacedLabelEndX + APP_CONFIG.label_min_spacing_px_main_bar && currentLabelInfo.xPos >= APP_CONFIG.min_item_x_pos_for_label_main_bar) {
+            visibleLabelsInfo.push({id: currentLabelInfo.id, description: currentLabelInfo.item.description, valueFormatted: formatCurrency(currentLabelInfo.item.value), markerXPos: currentLabelInfo.xPos });
+            lastPlacedLabelEndX = labelEndX;
+        }
+      }
+      
+      mainBarTickItemsData.forEach(item => {
+        if (item.value === 0 || item.value >= mainItem.value) return;
+        const xPos = item.value / unit_per_pixel_main_bar; const itemColor = colorScale(item.id);
+        const marker = mainBarSel.append('div').attr('class', 'item-tick-marker').style('left', `${xPos}px`).style('background-color', itemColor).datum(item) 
+          .on("mouseover", (event, d) => { tooltip.transition().duration(100).style("opacity", .95); tooltip.html(`<strong>${d.description}</strong>${formatCurrency(d.value, {notation:'standard'})}`).style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 30) + "px"); })
+          .on("mouseout", () => { tooltip.transition().duration(300).style("opacity", 0); });
+        const labelInfoToShow = visibleLabelsInfo.find(vl => vl.id === item.id);
+        if(labelInfoToShow){ marker.append('div').attr('class', 'item-tick-label').html(`<strong>${labelInfoToShow.description.substring(0,120)}${labelInfoToShow.description.length > 120 ? '...' : ''}</strong><em>${labelInfoToShow.valueFormatted}</em>`); }
+      });
+
+      const numTopAxisTicks = Math.max(5, Math.min(20, Math.floor(mainBarActualWidthPx / 70)));
+      const topTickValues = d3.scaleLinear().domain([0, mainItem.value]).ticks(numTopAxisTicks);
+      topAxisContainerSel.selectAll('.top-axis-tick').data(topTickValues.filter(v => (v / unit_per_pixel_main_bar) >= 0.5 || v === 0 )).enter().append('div').attr('class', 'top-axis-tick').style('left', d => `${d / unit_per_pixel_main_bar}px`).text(d => formatCurrency(d));
+    }
+    
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.style.display === 'block') {
+        sidebar.style.display = 'none';
+        document.getElementById('sidebar-toggle').innerHTML = '⚙️';
+      } else {
+        sidebar.style.display = 'block';
+        document.getElementById('sidebar-toggle').innerHTML = '❌';
+      }
+    }
+
+    function initializeApp() {
+      d3.json("data.json")
+        .then(data => {
+          chartData = data;
+          if (!chartData || !chartData.items || !chartData.items.some(item => item.id === APP_CONFIG.main_item_id)) {
+              const mainItemId = APP_CONFIG.main_item_id;
+              alert(`Erro Crítico: O item principal (ID: "${mainItemId}") não foi encontrado no arquivo data.json ou a estrutura do JSON é inválida. A visualização não pode continuar. Verifique seu data.json.`);
+              infoGlobalSel.text(`Erro: Item principal "${mainItemId}" ausente ou JSON inválido em data.json.`);
+              return;
+          }
+          renderEditableItemList(); // Atualizado para nova função
+          requestAnimationFrame(() => { setTimeout(renderVisualization, 100); }); // Ajustado delay
+        })
+        .catch(error => {
+          console.error("Erro ao carregar data.json:", error);
+          infoGlobalSel.text("Erro ao carregar dados iniciais (data.json). Verifique o console, se o arquivo existe e seu formato.");
+        });
+    }
+    initializeApp();
+  </script>
+</body>
+</html>
