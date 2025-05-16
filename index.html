@@ -483,7 +483,7 @@
           .on("mouseout", () => { tooltip.transition().duration(300).style("opacity", 0); });
         
         if (item.renderWidth >= APP_CONFIG.min_dimension_for_initial_label_px && item.renderHeight >= APP_CONFIG.min_dimension_for_initial_label_px) {
-            wrapper.append('div').attr('class', 'small-item-label').html(`<strong>${item.description.substring(0,120)}${item.description.length > 120 ? '...' : ''}</strong><em>${formatCurrency(item.value, {maximumFractionDigits:0})}</em>`);
+            wrapper.append('div').attr('class', 'small-item-label').html(`<strong>${item.description.substring(0,120)}${item.description.length > 120 ? '...' : ''}</strong><em>${formatCurrency(item.value)}</em>`);
         }
         const marginRight = parseFloat(getComputedStyle(wrapper.node()).marginRight || "0");
         totalInitialZoneWidth += item.renderWidth + marginRight;
