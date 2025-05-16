@@ -510,6 +510,9 @@
           .on("mouseout", () => { tooltip.transition().duration(300).style("opacity", 0); });
       }
 
+      //adiciona label no começo do mainItem
+        const mainItemLabel = mainBarSel.append('div').attr('class', 'item-tick-label').style('left', '150px').html(`<strong>${mainItem.description.substring(0,120)}${mainItem.description.length > 120 ? '...' : ''}</strong><em>${formatCurrency(mainItem.value)}</em>`);
+      
       let labelsData = []; 
       mainBarTickItemsData.forEach(item => {
         if (item.value === 0 || item.value >= mainItem.value) return;
